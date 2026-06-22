@@ -17,6 +17,7 @@ import {
   PCFSoftShadowMap,
   PerspectiveCamera,
   PMREMGenerator,
+  PointLight,
   Scene,
   SRGBColorSpace,
   SpotLight,
@@ -90,6 +91,7 @@ environmentMap.dispose();
 
 const camera = new PerspectiveCamera(34, 1, 0.1, 100);
 camera.position.set(0, 0, 6.2);
+camera.layers.enable(0);
 
 const engineRoot = new Group();
 scene.add(engineRoot);
@@ -103,12 +105,17 @@ keyLight.castShadow = true;
 keyLight.shadow.mapSize.set(1024, 1024);
 scene.add(keyLight);
 
-const mouseLight = new SpotLight(0xffffff, 4.5, 9, 0.16, 0.72, 1.4);
-mouseLight.position.set(0, 0, 3.4);
+const mouseLight = new SpotLight(0xffffff, 14, 14, 0.2, 0.58, 1.05);
+mouseLight.position.set(0, 0, 5.6);
 mouseLight.target.position.set(0, 0, 0);
 mouseLight.castShadow = false;
 scene.add(mouseLight);
 scene.add(mouseLight.target);
+
+const cursorPointLight = new PointLight(0xffffff, 42, 6, 2);
+cursorPointLight.position.set(0, 0, 5.7);
+scene.add(cursorPointLight);
+
 
 const horizontalTurnAmount = 0.5;
 const pointer = new Vector2(1, 0);
@@ -253,11 +260,13 @@ function animate(): void {
   engineRoot.rotation.x = MathUtils.damp(engineRoot.rotation.x, targetRotation.x, 5, delta);
   engineRoot.rotation.y = MathUtils.damp(engineRoot.rotation.y, targetRotation.y, 5, delta);
 
-  getPointerPositionAtDepth(2.9, pointerWorldPosition);
+  getPointerPositionAtDepth(5.6, pointerWorldPosition);
   mouseLight.position.copy(pointerWorldPosition);
-  mouseLight.position.z = 3.4;
+  mouseLight.position.z = 5.6;
+  cursorPointLight.position.copy(mouseLight.position);
+  cursorPointLight.position.z = 5.7;
 
-  getPointerPositionAtDepth(0, pointerWorldPosition);
+  getPointerPositionAtDepth(0.15, pointerWorldPosition);
   mouseLight.target.position.copy(pointerWorldPosition);
 
   if (propeller) {
