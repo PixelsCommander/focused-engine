@@ -4,12 +4,10 @@ import {
   ACESFilmicToneMapping,
   AmbientLight,
   Box3,
-  CanvasTexture,
   Clock,
   Color,
   DirectionalLight,
   DoubleSide,
-  EquirectangularReflectionMapping,
   Group,
   MathUtils,
   Mesh,
@@ -26,6 +24,7 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#scene");
@@ -51,48 +50,13 @@ const renderer = new WebGLRenderer({
 });
 renderer.outputColorSpace = SRGBColorSpace;
 renderer.toneMapping = ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.06;
+renderer.toneMappingExposure = 0.05;
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 const pmremGenerator = new PMREMGenerator(renderer);
-
-function createEnvironmentMap(): CanvasTexture {
-  const environmentCanvas = document.createElement("canvas");
-  environmentCanvas.width = 1024;
-  environmentCanvas.height = 512;
-
-  const context = environmentCanvas.getContext("2d");
-  if (!context) {
-    throw new Error("Unable to create environment map.");
-  }
-
-  const gradient = context.createLinearGradient(0, 0, 0, environmentCanvas.height);
-  gradient.addColorStop(0, "#f0f0f0");
-  gradient.addColorStop(0.28, "#3f3f3f");
-  gradient.addColorStop(0.5, "#090909");
-  gradient.addColorStop(0.72, "#343434");
-  gradient.addColorStop(1, "#dadada");
-  context.fillStyle = gradient;
-  context.fillRect(0, 0, environmentCanvas.width, environmentCanvas.height);
-
-  context.fillStyle = "rgba(255, 255, 255, 0.92)";
-  context.fillRect(110, 84, 54, 344);
-  context.fillRect(812, 54, 86, 404);
-
-  context.fillStyle = "rgba(210, 210, 210, 0.56)";
-  context.fillRect(348, 30, 180, 62);
-  context.fillRect(448, 410, 270, 46);
-
-  const texture = new CanvasTexture(environmentCanvas);
-  texture.mapping = EquirectangularReflectionMapping;
-  texture.colorSpace = SRGBColorSpace;
-
-  return texture;
-}
-
-const environmentMap = createEnvironmentMap();
-scene.environment = pmremGenerator.fromEquirectangular(environmentMap).texture;
-environmentMap.dispose();
+const roomEnvironment = new RoomEnvironment();
+scene.environment = pmremGenerator.fromScene(roomEnvironment, 0.04).texture;
+roomEnvironment.dispose();
 
 const camera = new PerspectiveCamera(34, 1, 0.1, 100);
 camera.position.set(0, 0, 6.2);
@@ -101,28 +65,18 @@ camera.layers.enable(0);
 const engineRoot = new Group();
 scene.add(engineRoot);
 
-const ambientLight = new AmbientLight(0xffffff, 2.35);
+const ambientLight = new AmbientLight(0xffffff, 1.35);
 scene.add(ambientLight);
 
-/*const keyLight = new DirectionalLight(0xffffff, 3.2);
-keyLight.position.set(2.5, 2.2, 4);
-keyLight.castShadow = false;
-scene.add(keyLight);*/
-
-const mouseLight = new SpotLight(0xffffff, 14, 14, 0.34, 0.7, 0.9);
+const mouseLight = new SpotLight(0xffffff, 54, 14, 0.14, 1.7, 0.5);
 mouseLight.position.set(0, 0, 5.6);
-mouseLight.target.position.set(0, 0, 0);
-mouseLight.castShadow = false;
+mouseLight.target.position.set(mouseLight.position.x, mouseLight.position.y, 0);
 scene.add(mouseLight);
 scene.add(mouseLight.target);
 
-const cursorPointLight = new PointLight(0xffffff, 24, 8, 1.25);
+const cursorPointLight = new PointLight(0xffffff, 0, 18, 1.25);
 cursorPointLight.position.set(0, 0, 5.7);
 scene.add(cursorPointLight);
-
-/*const cameraPointLight = new PointLight(0xffffff, 22, 12, 2);
-cameraPointLight.position.copy(camera.position);
-scene.add(cameraPointLight);*/
 
 const horizontalTurnAmount = 0.5;
 const pointer = new Vector2(1, 0);
@@ -390,11 +344,12 @@ function animate(): void {
   getPointerPositionAtDepth(5.6, pointerWorldPosition);
   mouseLight.position.copy(pointerWorldPosition);
   mouseLight.position.z = 5.6;
-  cursorPointLight.position.copy(mouseLight.position);
+  cursorPointLight.position.copy(pointerWorldPosition);
   cursorPointLight.position.z = 5.7;
 
-  mouseTargetPosition.set(mouseLight.position.x, mouseLight.position.y, 0);
+  getPointerPositionAtDepth(0, mouseTargetPosition);
   mouseLight.target.position.copy(mouseTargetPosition);
+  mouseLight.target.updateMatrixWorld();
 
   if (spinners.length > 0) {
     propellerSpin = (propellerSpin + delta * propellerSpeed) % (Math.PI * 2);
