@@ -27,15 +27,9 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#scene");
-const centerEngineControl = document.querySelector<HTMLInputElement>("#center-engine");
-const lockEngineFacingControl = document.querySelector<HTMLInputElement>("#lock-engine-facing");
 
 if (!canvas) {
   throw new Error("Scene canvas not found.");
-}
-
-if (!centerEngineControl || !lockEngineFacingControl) {
-  throw new Error("Engine controls not found.");
 }
 
 const scene = new Scene();
@@ -77,10 +71,7 @@ const cursorPointLight = new PointLight(0xffffff, 10, 4, 1);
 cursorPointLight.position.set(0, 0, 5.7);
 scene.add(cursorPointLight);
 
-const horizontalTurnAmount = 0.5;
 const pointer = new Vector2(1, 0);
-const smoothedPointer = new Vector2(1, 0);
-const targetRotation = new Vector2(0, horizontalTurnAmount);
 const pointerWorldPosition = new Vector3();
 const mouseTargetPosition = new Vector3();
 const pointerRayDirection = new Vector3();
@@ -92,8 +83,7 @@ const maximumRotationSpeed = 10;
 type Axis = "x" | "y" | "z";
 
 type SpinnerConfig = {
-  name?: string;
-  nameIncludes?: string;
+  name: string;
   axis?: Axis;
   direction: 1 | -1;
   speedMultiplier?: number;
@@ -102,7 +92,6 @@ type SpinnerConfig = {
 type ModelConfig = {
   fileName: string;
   scale: number;
-  materialTuning: "original-metal" | "preserve";
   rotation?: Partial<Record<Axis, number>>;
   spinners: SpinnerConfig[];
 };
@@ -115,51 +104,33 @@ type Spinner = {
   speedMultiplier: number;
 };
 
-const modelConfigs = {
-  original: {
-    fileName: "jet_engine.glb",
-    scale: 32.4,
-    materialTuning: "original-metal",
-    spinners: [
-      {
-        nameIncludes: "propellery",
-        direction: -1,
-      },
-    ],
+const modelConfig = {
+  fileName: "jet_engine2.stripped.glb",
+  scale: 32.4,
+  rotation: {
+    y: -Math.PI / 2,
   },
-  turbine2: {
-    fileName: "jet_engine2.stripped.glb",
-    scale: 32.4,
-    materialTuning: "original-metal",
-    rotation: {
-      y: -Math.PI / 2,
+  spinners: [
+    {
+      name: "Object_15",
+      axis: "x",
+      direction: -1,
     },
-    spinners: [
-      {
-        name: "Object_15",
-        axis: "x",
-        direction: -1,
-      },
-      {
-        name: "Object_5",
-        axis: "x",
-        direction: -1,
-      },
-      {
-        name: "Object_8",
-        axis: "x",
-        direction: 1,
-      },
-    ],
-  },
-} satisfies Record<string, ModelConfig>;
-
-const activeModelConfig = modelConfigs.turbine2;
+    {
+      name: "Object_5",
+      axis: "x",
+      direction: -1,
+    },
+    {
+      name: "Object_8",
+      axis: "x",
+      direction: 1,
+    },
+  ],
+} satisfies ModelConfig;
 
 const spinners: Spinner[] = [];
 let propellerSpin = 0;
-let shouldCenterEngine = centerEngineControl.checked;
-let shouldLockEngineFacing = lockEngineFacingControl.checked;
 
 function getScrollProgress(): number {
   const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
@@ -188,12 +159,7 @@ function findObject(root: Object3D, config: SpinnerConfig): Object3D | null {
       return;
     }
 
-    if (config.name && object.name === config.name) {
-      match = object;
-      return;
-    }
-
-    if (config.nameIncludes && object.name.toLowerCase().includes(config.nameIncludes)) {
+    if (object.name === config.name) {
       match = object;
     }
   });
@@ -240,7 +206,7 @@ function normalizeModel(model: Object3D, config: ModelConfig): void {
   model.position.z -= frontAlignedBox.max.z;
 }
 
-function tuneMaterials(root: Object3D, mode: ModelConfig["materialTuning"]): void {
+function tuneMaterials(root: Object3D): void {
   root.traverse((object) => {
     if (!(object instanceof Mesh)) {
       return;
@@ -253,17 +219,10 @@ function tuneMaterials(root: Object3D, mode: ModelConfig["materialTuning"]): voi
 
     for (const material of materials) {
       if (material instanceof MeshStandardMaterial) {
-        if (mode === "original-metal") {
-          material.color.set(0xffffff);
-          material.metalness = 0.70;
-          material.roughness = 0.15;
-          material.envMapIntensity = 0.5;
-        } else {
-          material.envMapIntensity = 0.5;/*Math.max(
-            material.envMapIntensity,
-            material.metalness > 0.5 ? 2.4 : 1.6,
-          );*/
-        }
+        material.color.set(0xffffff);
+        material.metalness = 0.70;
+        material.roughness = 0.15;
+        material.envMapIntensity = 0.5;
       }
     }
   });
@@ -321,22 +280,9 @@ function animate(): void {
   const scrollProgress = getScrollProgress();
   const propellerSpeed =
     minimalRotationSpeed + (maximumRotationSpeed - minimalRotationSpeed) * scrollProgress;
-  const viewportHeight = 2 * Math.tan(MathUtils.degToRad(camera.fov) / 2) * camera.position.z;
-  const viewportWidth = viewportHeight * camera.aspect;
-
-  smoothedPointer.lerp(pointer, 1 - Math.exp(-delta * 4));
-
-  if (shouldLockEngineFacing) {
-    targetRotation.set(0, 0);
-  } else {
-    targetRotation.x = -smoothedPointer.y * 0.14;
-    targetRotation.y = ((smoothedPointer.x + 1) / 2) * horizontalTurnAmount;
-  }
-
-  const targetEngineX = shouldCenterEngine ? 0 : -viewportWidth * 0.25;
-  engineRoot.position.x = MathUtils.damp(engineRoot.position.x, targetEngineX, 6, delta);
-  engineRoot.rotation.x = MathUtils.damp(engineRoot.rotation.x, targetRotation.x, 5, delta);
-  engineRoot.rotation.y = MathUtils.damp(engineRoot.rotation.y, targetRotation.y, 5, delta);
+  engineRoot.position.x = MathUtils.damp(engineRoot.position.x, 0, 6, delta);
+  engineRoot.rotation.x = MathUtils.damp(engineRoot.rotation.x, 0, 5, delta);
+  engineRoot.rotation.y = MathUtils.damp(engineRoot.rotation.y, 0, 5, delta);
 
   getPointerPositionAtDepth(5.7, pointerWorldPosition);
   cursorPointLight.position.copy(pointerWorldPosition);
@@ -360,23 +306,17 @@ function animate(): void {
 
 window.addEventListener("resize", resizeRenderer);
 window.addEventListener("pointermove", updatePointer, { passive: true });
-centerEngineControl.addEventListener("change", () => {
-  shouldCenterEngine = centerEngineControl.checked;
-});
-lockEngineFacingControl.addEventListener("change", () => {
-  shouldLockEngineFacing = lockEngineFacingControl.checked;
-});
 
 resizeRenderer();
 
 loader.load(
-  `${import.meta.env.BASE_URL}assets/${activeModelConfig.fileName}`,
+  `${import.meta.env.BASE_URL}assets/${modelConfig.fileName}`,
   (gltf) => {
     const model = gltf.scene;
 
-    normalizeModel(model, activeModelConfig);
-    tuneMaterials(model, activeModelConfig.materialTuning);
-    setupSpinners(model, activeModelConfig.spinners);
+    normalizeModel(model, modelConfig);
+    tuneMaterials(model);
+    setupSpinners(model, modelConfig.spinners);
 
     engineRoot.add(model);
   },

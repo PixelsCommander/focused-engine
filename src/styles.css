@@ -54,42 +54,6 @@ body {
   outline: none;
 }
 
-.engine-controls {
-  position: fixed;
-  top: 14px;
-  left: 14px;
-  z-index: 4;
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 6px;
-  background: rgba(28, 28, 28, 0.88);
-  color: rgba(247, 246, 236, 0.88);
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1;
-  backdrop-filter: blur(8px);
-}
-
-.engine-control {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 18px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.engine-control input {
-  width: 14px;
-  height: 14px;
-  margin: 0;
-  accent-color: #4f4f4f;
-  cursor: pointer;
-}
-
 .hero-overlay {
   position: absolute;
   inset: 0;
@@ -247,7 +211,7 @@ main {
   }
 
   .hero-overlay {
-    padding: 82px 18px 44px;
+    padding: 20px 18px 44px;
   }
 
   .site-header {
