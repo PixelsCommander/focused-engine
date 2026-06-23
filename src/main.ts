@@ -50,7 +50,7 @@ const renderer = new WebGLRenderer({
 });
 renderer.outputColorSpace = SRGBColorSpace;
 renderer.toneMapping = ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.05;
+renderer.toneMappingExposure = 0.045;
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 const pmremGenerator = new PMREMGenerator(renderer);
@@ -88,7 +88,7 @@ const pointerRayDirection = new Vector3();
 const clock = new Clock();
 const loader = new GLTFLoader();
 const minimalRotationSpeed = 0.35;
-const maximumRotationSpeed = 5;
+const maximumRotationSpeed = 10;
 
 type Axis = "x" | "y" | "z";
 
@@ -257,12 +257,12 @@ function tuneMaterials(root: Object3D, mode: ModelConfig["materialTuning"]): voi
         if (mode === "original-metal") {
           material.color.set(0xffffff);
           material.side = DoubleSide;
-          material.metalness = 0.72;
-          material.roughness = 0.2;
-          material.envMapIntensity = 14.5;
+          material.metalness = 0.70;
+          material.roughness = 0.15;
+          material.envMapIntensity = 0.5;
         } else {
           material.side = DoubleSide;
-          material.envMapIntensity = 14;/*Math.max(
+          material.envMapIntensity = 0.5;/*Math.max(
             material.envMapIntensity,
             material.metalness > 0.5 ? 2.4 : 1.6,
           );*/
