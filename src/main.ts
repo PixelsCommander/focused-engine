@@ -68,7 +68,7 @@ scene.add(engineRoot);
 const ambientLight = new AmbientLight(0xffffff, 1.35);
 scene.add(ambientLight);
 
-const mouseLight = new SpotLight(0xffffff, 54, 14, 0.14, 1.7, 0.5);
+const mouseLight = new SpotLight(0xffffff, 34, 140, 0.15, 1.7, 0.1);
 mouseLight.position.set(0, 0, 5.6);
 mouseLight.target.position.set(mouseLight.position.x, mouseLight.position.y, 0);
 scene.add(mouseLight);
