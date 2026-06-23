@@ -7,7 +7,6 @@ import {
   Clock,
   Color,
   DirectionalLight,
-  DoubleSide,
   Group,
   MathUtils,
   Mesh,
@@ -74,7 +73,7 @@ mouseLight.target.position.set(mouseLight.position.x, mouseLight.position.y, 0);
 scene.add(mouseLight);
 scene.add(mouseLight.target);
 
-const cursorPointLight = new PointLight(0xffffff, 0, 18, 1.25);
+const cursorPointLight = new PointLight(0xffffff, 10, 4, 1);
 cursorPointLight.position.set(0, 0, 5.7);
 scene.add(cursorPointLight);
 
@@ -129,7 +128,7 @@ const modelConfigs = {
     ],
   },
   turbine2: {
-    fileName: "jet_engine2.glb",
+    fileName: "jet_engine2.stripped.glb",
     scale: 32.4,
     materialTuning: "original-metal",
     rotation: {
@@ -256,12 +255,10 @@ function tuneMaterials(root: Object3D, mode: ModelConfig["materialTuning"]): voi
       if (material instanceof MeshStandardMaterial) {
         if (mode === "original-metal") {
           material.color.set(0xffffff);
-          material.side = DoubleSide;
           material.metalness = 0.70;
           material.roughness = 0.15;
           material.envMapIntensity = 0.5;
         } else {
-          material.side = DoubleSide;
           material.envMapIntensity = 0.5;/*Math.max(
             material.envMapIntensity,
             material.metalness > 0.5 ? 2.4 : 1.6,
@@ -341,11 +338,8 @@ function animate(): void {
   engineRoot.rotation.x = MathUtils.damp(engineRoot.rotation.x, targetRotation.x, 5, delta);
   engineRoot.rotation.y = MathUtils.damp(engineRoot.rotation.y, targetRotation.y, 5, delta);
 
-  getPointerPositionAtDepth(5.6, pointerWorldPosition);
-  mouseLight.position.copy(pointerWorldPosition);
-  mouseLight.position.z = 5.6;
+  getPointerPositionAtDepth(5.7, pointerWorldPosition);
   cursorPointLight.position.copy(pointerWorldPosition);
-  cursorPointLight.position.z = 5.7;
 
   getPointerPositionAtDepth(0, mouseTargetPosition);
   mouseLight.target.position.copy(mouseTargetPosition);
