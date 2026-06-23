@@ -8,6 +8,16 @@
   <body>
     <section class="hero">
       <canvas id="scene"></canvas>
+      <form class="engine-controls" aria-label="Engine view controls">
+        <label class="engine-control">
+          <input id="center-engine" type="checkbox" checked />
+          <span>Center engine</span>
+        </label>
+        <label class="engine-control">
+          <input id="lock-engine-facing" type="checkbox" checked />
+          <span>Face camera</span>
+        </label>
+      </form>
       <div class="hero-overlay">
         <header class="site-header" aria-label="Primary navigation">
           <a class="brand" href="#" aria-label="FocusReactive home">
